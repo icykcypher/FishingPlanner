@@ -1,0 +1,15 @@
+﻿<UserControl x:Class="FishingPlanner.Views.AddEventView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid Margin="20">
+        <Grid Margin="20">
+            <StackPanel>
+                <TextBox Text="{Binding FishingEvent.Title, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,10"/>
+                <TextBox Text="{Binding FishingEvent.Description, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,10"/>
+                <TextBox Text="{Binding FishingEvent.Location, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,10"/>
+                <DatePicker SelectedDate="{Binding FishingEvent.Date}" Margin="0,0,0,10"/>
+                <Button Content="Save" Command="{Binding SaveEventCommand}" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+</UserControl>
