@@ -1,6 +1,9 @@
 ﻿using Serilog;
 using System.Windows;
 using FishingPlanner.Data;
+using FishingPlanner.Services;
+using FishingPlanner.Interfaces;
+using FishingPlanner.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -34,7 +37,15 @@ namespace FishingPlanner
             var services = new ServiceCollection();
 
             services.AddDbContext<FishingPlannerDbContext>(options =>
-                options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+                options.UseSqlServer
+                (
+                    Configuration.GetConnectionString("DefaultConnection"))
+                        .EnableSensitiveDataLogging()
+                        .LogTo(m => Log.Information(m))
+                );
+
+            services.AddScoped<IFishingEventRepository, FishingEventRepository>();
+            services.AddScoped<IFishingEventService, FishingEventService>();
 
             Services = services.BuildServiceProvider();
 
@@ -44,11 +55,12 @@ namespace FishingPlanner
                 using var scope = Services.CreateScope();
                 var context = scope.ServiceProvider.GetRequiredService<FishingPlannerDbContext>();
                 context.Database.Migrate();
-                Log.Information("Миграция успешно выполнена.");
+                Log.Information("Migration completed successfully.");
             }
             catch (Exception e)
             {
-                Log.Error(e, "Ошибка при миграции базы данных");
+                MessageBox.Show("Error while migrating to DB: " + e.Message, "Migration Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                Log.Error(e, "Error while migrating to DB");
             }
         }
     }
