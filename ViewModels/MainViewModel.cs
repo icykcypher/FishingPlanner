@@ -1,18 +1,26 @@
-﻿using System.Windows.Controls;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using CommunityToolkit.Mvvm.ComponentModel;
+using FishingPlanner.Views;
+using System.Windows.Controls;
 
 namespace FishingPlanner.ViewModels
 {
     public partial class MainViewModel : ObservableObject
     {
-        public MainViewModel()
+        public MainViewModel(CalendarView calendarView, AddEventView addEventView, TipsView tipsView)
         {
+            _calendarView = calendarView;
+            _addEventView = addEventView;
+            _tipsView = tipsView;
             ShowCalendar();
         }
 
+
         [ObservableProperty]
         private UserControl currentView = null!;
+        private readonly CalendarView _calendarView;
+        private readonly AddEventView _addEventView;
+        private readonly TipsView _tipsView;
 
         [RelayCommand]
         private void ShowCalendar() => CurrentView = new Views.CalendarView();

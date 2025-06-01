@@ -1,4 +1,6 @@
-﻿using System.Windows.Controls;
+﻿using FishingPlanner.ViewModels;
+using Microsoft.Extensions.DependencyInjection;
+using System.Windows.Controls;
 
 namespace FishingPlanner.Views
 {
@@ -10,6 +12,9 @@ namespace FishingPlanner.Views
         public CalendarView()
         {
             InitializeComponent();
+
+            var vm = App.Services.GetRequiredService<CalendarViewModel>();
+            this.DataContext = vm;
         }
     }
 }

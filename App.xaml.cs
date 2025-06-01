@@ -1,12 +1,14 @@
-﻿using Serilog;
-using System.Windows;
-using FishingPlanner.Data;
-using FishingPlanner.Services;
+﻿using FishingPlanner.Data;
 using FishingPlanner.Interfaces;
 using FishingPlanner.Repositories;
+using FishingPlanner.Services;
+using FishingPlanner.ViewModels;
+using FishingPlanner.Views;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Serilog;
+using System.Windows;
 
 namespace FishingPlanner
 {
@@ -36,16 +38,31 @@ namespace FishingPlanner
             // DI
             var services = new ServiceCollection();
 
-            services.AddDbContext<FishingPlannerDbContext>(options =>
-                options.UseSqlServer
-                (
-                    Configuration.GetConnectionString("DefaultConnection"))
-                        .EnableSensitiveDataLogging()
-                        .LogTo(m => Log.Information(m))
-                );
+            services.AddSingleton<IConfiguration>(Configuration);
+            try
+            {
+                services.AddDbContext<FishingPlannerDbContext>(options =>
+                    options.UseSqlServer
+                    (
+                        Configuration.GetConnectionString("DefaultConnection"))
+                            .EnableSensitiveDataLogging()
+                            .LogTo(m => Log.Information(m))
+                    );
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show("Error while connecting to DB: " + e.Message, "DB Connection Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
 
+            services.AddSingleton<FishingForecastService>();
             services.AddScoped<IFishingEventRepository, FishingEventRepository>();
             services.AddScoped<IFishingEventService, FishingEventService>();
+            services.AddSingleton<CalendarViewModel>();
+            services.AddSingleton<CalendarView>();
+            services.AddSingleton<AddEventView>();
+            services.AddSingleton<TipsView>();
+            services.AddSingleton<MainViewModel>();
+
 
             Services = services.BuildServiceProvider();
 

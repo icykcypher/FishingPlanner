@@ -1,17 +1,13 @@
 ﻿<UserControl x:Class="FishingPlanner.Views.CalendarView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="clr-namespace:FishingPlanner.ViewModels"
              xmlns:local="clr-namespace:FishingPlanner.Models"
              xmlns:services="clr-namespace:FishingPlanner.Services">
-    <UserControl.DataContext>
-        <vm:CalendarViewModel />
-    </UserControl.DataContext>
-
     <UserControl.Resources>
-        <services:BoolToBrushConverter x:Key="BoolToBrushConverter" 
-                                CurrentMonthBrush="White" 
-                                OtherMonthBrush="LightGray" />
+        <services:DateAndBoolToBrushConverter x:Key="DateAndBoolToBrushConverter"
+                                         CurrentMonthBrush="White"
+                                         OtherMonthBrush="LightGray"
+                                         TodayBrush="LightBlue" />
     </UserControl.Resources>
 
     <DockPanel>
@@ -43,7 +39,14 @@
 
             <ItemsControl.ItemTemplate>
                 <DataTemplate DataType="{x:Type local:CalendarDay}">
-                    <Border BorderBrush="Gray" BorderThickness="0.5" Padding="5" Background="{Binding IsCurrentMonth, Converter={StaticResource BoolToBrushConverter}}">
+                    <Border BorderBrush="Gray" BorderThickness="0.5" Padding="5">
+                        <Border.Background>
+                            <MultiBinding Converter="{StaticResource DateAndBoolToBrushConverter}">
+                                <Binding Path="Date" />
+                                <Binding Path="IsCurrentMonth" />
+                            </MultiBinding>
+                        </Border.Background>
+
                         <StackPanel>
                             <TextBlock Text="{Binding Date.Day}" FontWeight="Bold"/>
                             <ItemsControl ItemsSource="{Binding Events}">
