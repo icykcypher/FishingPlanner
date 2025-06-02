@@ -1,34 +1,31 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using FishingPlanner.Views;
-using System.Windows.Controls;
+﻿using FishingPlanner.Views;
+using FishingPlanner.Models;
+using FishingPlanner.Interfaces;
+using FishingPlanner.ViewModels;
+using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace FishingPlanner.ViewModels
+public class MainViewModel : ObservableObject
 {
-    public partial class MainViewModel : ObservableObject
+    private object _currentView = null!;
+    public object CurrentView
     {
-        public MainViewModel(CalendarView calendarView, AddEventView addEventView, TipsView tipsView)
-        {
-            _calendarView = calendarView;
-            _addEventView = addEventView;
-            _tipsView = tipsView;
-            ShowCalendar();
-        }
+        get => _currentView;
+        set => SetProperty(ref _currentView, value);
+    }
 
+    public MainViewModel(IFishingDataProvider fishingService)
+    {
+        var calendarVM = new CalendarViewModel(fishingService);
+        calendarVM.DaySelected += OnDaySelected;
 
-        [ObservableProperty]
-        private UserControl currentView = null!;
-        private readonly CalendarView _calendarView;
-        private readonly AddEventView _addEventView;
-        private readonly TipsView _tipsView;
+        CurrentView = new CalendarView (calendarVM) { DataContext = calendarVM };
+    }
 
-        [RelayCommand]
-        private void ShowCalendar() => CurrentView = new Views.CalendarView();
+    private void OnDaySelected(CalendarDay selectedDay)
+    {
+        var detailVM = new DayDetailViewModel(selectedDay);
+        var detailView = new DayDetailView { DataContext = detailVM };
 
-        [RelayCommand]
-        private void ShowAddEvent() => CurrentView = new Views.AddEventView();
-
-        [RelayCommand]
-        private void ShowTips() => CurrentView = new Views.TipsView();
+        CurrentView = detailView;  // переключаем вью
     }
 }

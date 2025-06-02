@@ -8,17 +8,17 @@
                                          CurrentMonthBrush="White"
                                          OtherMonthBrush="LightGray"
                                          TodayBrush="LightBlue" />
+        <services:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+
     </UserControl.Resources>
 
     <DockPanel>
-        <!-- Навигация месяцами -->
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" HorizontalAlignment="Center" Margin="10">
             <Button Content="←" Command="{Binding PreviousMonthCommand}" Width="40" />
             <TextBlock Text="{Binding CurrentMonth, StringFormat={}{0:MMMM yyyy}}" FontSize="20" Margin="10" VerticalAlignment="Center" />
             <Button Content="→" Command="{Binding NextMonthCommand}" Width="40" />
         </StackPanel>
 
-        <!-- Сетка дней недели -->
         <UniformGrid Rows="7" Columns="1">
             <TextBlock Text="Pn" TextAlignment="Center" VerticalAlignment="Center" FontWeight="Bold"/>
             <TextBlock Text="Út" TextAlignment="Center" VerticalAlignment="Center" FontWeight="Bold"/>
@@ -29,7 +29,6 @@
             <TextBlock Text="Ne" TextAlignment="Center" VerticalAlignment="Center" FontWeight="Bold"/>
         </UniformGrid>
 
-        <!-- Дни месяца -->
         <ItemsControl ItemsSource="{Binding Days}">
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
@@ -37,9 +36,17 @@
                 </ItemsPanelTemplate>
             </ItemsControl.ItemsPanel>
 
+            <ItemsControl.ItemContainerStyle>
+                <Style>
+                    <Setter Property="Control.HorizontalAlignment" Value="Stretch" />
+                    <Setter Property="Control.VerticalAlignment" Value="Stretch" />
+                </Style>
+            </ItemsControl.ItemContainerStyle>
+
             <ItemsControl.ItemTemplate>
                 <DataTemplate DataType="{x:Type local:CalendarDay}">
-                    <Border BorderBrush="Gray" BorderThickness="0.5" Padding="5">
+                    <Border BorderBrush="Gray"
+                    BorderThickness="0.5">
                         <Border.Background>
                             <MultiBinding Converter="{StaticResource DateAndBoolToBrushConverter}">
                                 <Binding Path="Date" />
@@ -47,16 +54,39 @@
                             </MultiBinding>
                         </Border.Background>
 
-                        <StackPanel>
-                            <TextBlock Text="{Binding Date.Day}" FontWeight="Bold"/>
-                            <ItemsControl ItemsSource="{Binding Events}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <TextBlock Text="{Binding Title}" FontSize="10" Foreground="DarkGreen"/>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </StackPanel>
+                        <Button Command="{Binding DataContext.DaySelectedCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                        CommandParameter="{Binding}"
+                        Padding="5"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Stretch">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Text="{Binding Date.Day}" FontWeight="Bold" Margin="2" HorizontalAlignment="Left"/>
+
+                                <ItemsControl ItemsSource="{Binding Events}" Grid.Row="1">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Title}" FontSize="10" Foreground="DarkGreen" TextWrapping="Wrap"/>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                                <StackPanel Orientation="Horizontal"
+                                    Grid.Row="2"
+                                    Margin="2,5,0,0"
+                                    Visibility="{Binding IsFishActive, Converter={StaticResource BoolToVisibilityConverter}}">
+                                    <TextBlock Text="🎣" FontSize="12" />
+                                    <TextBlock Text="Active fishing" FontSize="10" Foreground="DarkBlue" Margin="2,0,0,0"/>
+                                </StackPanel>
+                            </Grid>
+                        </Button>
                     </Border>
                 </DataTemplate>
             </ItemsControl.ItemTemplate>

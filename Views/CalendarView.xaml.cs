@@ -1,20 +1,32 @@
-﻿using FishingPlanner.ViewModels;
+﻿using CommunityToolkit.Mvvm.Input;
+using FishingPlanner.Models;
+using FishingPlanner.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace FishingPlanner.Views
 {
-    /// <summary>
-    /// Interaction logic for CalendarView.xaml
-    /// </summary>
     public partial class CalendarView : UserControl
     {
-        public CalendarView()
+        public ICommand DaySelectedCommand { get; }
+
+        public CalendarView(CalendarViewModel calendarViewModel)
         {
             InitializeComponent();
 
-            var vm = App.Services.GetRequiredService<CalendarViewModel>();
+            var vm = calendarViewModel;
             this.DataContext = vm;
+
+            DaySelectedCommand = new RelayCommand<CalendarDay>(OnDaySelected);
+        }
+
+        private void OnDaySelected(CalendarDay? selectedDay)
+        {
+            if (selectedDay == null) return;
+
+            var detailViewModel = new DayDetailViewModel(selectedDay);
+            var detailView = new DayDetailView { DataContext = detailViewModel };
         }
     }
 }

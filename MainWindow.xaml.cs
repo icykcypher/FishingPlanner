@@ -1,6 +1,5 @@
-﻿using FishingPlanner.ViewModels;
-using Microsoft.Extensions.DependencyInjection;
-using System.Windows;
+﻿using System.Windows;
+using FishingPlanner.ViewModels;
 
 namespace FishingPlanner
 {
@@ -9,11 +8,11 @@ namespace FishingPlanner
     /// </summary>
     public partial class MainWindow : Window
     {
-        public MainWindow()
+        public MainWindow(MainViewModel mainViewModel)
         {
             InitializeComponent();
+            DataContext = mainViewModel;
 
-            DataContext = App.Services.GetRequiredService<MainViewModel>();
         }
     }
 }

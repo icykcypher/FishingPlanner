@@ -5,12 +5,6 @@
         Title="Fishing Planner" Height="600" Width="900">
 
     <DockPanel>
-        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Background="#FF3399FF" Margin="10" >
-            <Button Content="Calendar" Margin="5" Command="{Binding ShowCalendarCommand}" />
-            <Button Content="Add Event" Margin="5" Command="{Binding ShowAddEventCommand}" />
-            <Button Content="Tips" Margin="5" Command="{Binding ShowTipsCommand}" />
-        </StackPanel>
-
-        <ContentControl Content="{Binding CurrentView}" />
+        <ContentControl Content="{Binding CurrentView}" x:Name="MainContentControl"/>
     </DockPanel>
 </Window>

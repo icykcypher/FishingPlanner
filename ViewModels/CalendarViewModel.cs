@@ -1,67 +1,99 @@
-﻿using FishingPlanner.Models;
-using FishingPlanner.Services;
+﻿using System.Windows.Input;
+using FishingPlanner.Models;
+using System.ComponentModel;
+using FishingPlanner.Interfaces;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
-using CommunityToolkit.Mvvm.ComponentModel;
-using Microsoft.Extensions.DependencyInjection;
+using System.Windows;
 
-namespace FishingPlanner.ViewModels
+public class CalendarViewModel : INotifyPropertyChanged
 {
-    public partial class CalendarViewModel : ObservableObject
+    private readonly IFishingDataProvider _fishingService;
+
+    public ObservableCollection<CalendarDay> Days { get; } = [];
+
+    private DateTime _currentMonth;
+    public DateTime CurrentMonth
     {
-        private readonly FishingForecastService _forecastService;
-        private readonly double _latitude = 55.751244;
-        private readonly double _longitude = 37.618423;
-
-        [ObservableProperty]
-        private DateTime _currentMonth;
-
-        public ObservableCollection<CalendarDay> Days { get; } = [];
-
-        public CalendarViewModel(IServiceProvider serviceProvider)
+        get => _currentMonth;
+        set
         {
-            _forecastService = serviceProvider.GetRequiredService<FishingForecastService>()
-                ?? throw new InvalidOperationException("FishingForecastService is not registered.");
-
-            CurrentMonth = DateTime.Today;
-            _ = GenerateCalendarAsync(CurrentMonth);
-        }
-
-        [RelayCommand]
-        private async Task NextMonth()
-        {
-            CurrentMonth = CurrentMonth.AddMonths(1);
-            await GenerateCalendarAsync(CurrentMonth);
-        }
-
-        [RelayCommand]
-        private async Task PreviousMonth()
-        {
-            CurrentMonth = CurrentMonth.AddMonths(-1);
-            await GenerateCalendarAsync(CurrentMonth);
-        }
-
-        private async Task GenerateCalendarAsync(DateTime month)
-        {
-            Days.Clear();
-
-            var firstDayOfMonth = new DateTime(month.Year, month.Month, 1);
-            var daysBefore = ((int)firstDayOfMonth.DayOfWeek + 6) % 7;
-            var startDate = firstDayOfMonth.AddDays(-daysBefore);
-
-            for (var i = 0; i < 42; i++)
+            if (_currentMonth != value)
             {
-                var day = startDate.AddDays(i);
-
-                var forecast = await _forecastService.GetFishingForecastAsync(day, _latitude, _longitude);
-
-                Days.Add(new CalendarDay
-                {
-                    Date = day,
-                    IsCurrentMonth = day.Month == month.Month,
-                    FishingForecast = forecast
-                });
+                _currentMonth = value;
+                OnPropertyChanged();
+                LoadCalendarDays();
             }
         }
+    }
+
+    public ICommand PreviousMonthCommand { get; }
+    public ICommand NextMonthCommand { get; }
+
+    public IRelayCommand<CalendarDay> DaySelectedCommand { get; }
+
+    public event Action<CalendarDay>? DaySelected;
+
+    public CalendarViewModel(IFishingDataProvider fishingService)
+    {
+        _fishingService = fishingService;
+        _currentMonth = DateTime.Today;
+
+        PreviousMonthCommand = new RelayCommand(() => CurrentMonth = CurrentMonth.AddMonths(-1));
+        NextMonthCommand = new RelayCommand(() => CurrentMonth = CurrentMonth.AddMonths(1));
+
+        DaySelectedCommand = new RelayCommand<CalendarDay>(OnDaySelected);
+
+        LoadCalendarDays();
+    }
+
+    private void OnDaySelected(CalendarDay? selectedDay)
+    {
+        if (selectedDay == null) return;
+
+        DaySelected.Invoke(selectedDay);
+    }
+
+    private async void LoadCalendarDays()
+    {
+        Days.Clear();
+
+        var firstDayOfMonth = new DateTime(CurrentMonth.Year, CurrentMonth.Month, 1);
+        var daysOffset = ((int)firstDayOfMonth.DayOfWeek + 6) % 7;
+
+        var startDate = firstDayOfMonth.AddDays(-daysOffset);
+
+        for (int i = 0; i < 42; i++)
+        {
+            var day = startDate.AddDays(i);
+
+            var calendarDay = new CalendarDay
+            {
+                Date = day,
+                IsCurrentMonth = day.Month == CurrentMonth.Month
+            };
+
+            Days.Add(calendarDay);
+        }
+
+        double lat = 49.748;
+        double lon = 13.377;
+
+        var tasks = Days.Select(async day =>
+        {
+            var stat = await _fishingService.GetFishingStatAsync(day.Date, lat, lon);
+            day.IsFishActive = stat.IsFishActive;
+        });
+
+        await Task.WhenAll(tasks);
+
+        OnPropertyChanged(nameof(Days));
+    }
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    protected void OnPropertyChanged([System.Runtime.CompilerServices.CallerMemberName] string? name = null)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
 }

@@ -1,6 +1,5 @@
 ﻿using FishingPlanner.Models;
 using FishingPlanner.Interfaces;
-using FishingPlanner.Repositories;
 
 namespace FishingPlanner.Services
 {

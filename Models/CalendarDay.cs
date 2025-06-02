@@ -1,10 +1,26 @@
-﻿namespace FishingPlanner.Models
+﻿using System.ComponentModel;
+
+namespace FishingPlanner.Models
 {
-    public class CalendarDay
+    public class CalendarDay : INotifyPropertyChanged
     {
         public DateTime Date { get; set; }
         public bool IsCurrentMonth { get; set; }
-        public List<string> Events { get; set; } = [];
-        public string? FishingForecast { get; set; } = string.Empty; 
+        public List<FishingEvent> Events { get; set; } = [];
+
+        private bool _isFishActive;
+        public bool IsFishActive
+        {
+            get => _isFishActive;
+            set
+            {
+                _isFishActive = value;
+                OnPropertyChanged(nameof(IsFishActive));
+            }
+        }
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+        protected void OnPropertyChanged(string name) =>
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
 }

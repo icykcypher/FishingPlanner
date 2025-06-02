@@ -1,14 +1,16 @@
-﻿using FishingPlanner.Data;
-using FishingPlanner.Interfaces;
-using FishingPlanner.Repositories;
-using FishingPlanner.Services;
-using FishingPlanner.ViewModels;
+﻿using Serilog;
+using System.Windows;
+using FishingPlanner.Data;
 using FishingPlanner.Views;
+using FishingPlanner.Services;
+using System.Net.Http.Headers;
+using FishingPlanner.Interfaces;
+using FishingPlanner.ViewModels;
+using FishingPlanner.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Serilog;
-using System.Windows;
+using System.Diagnostics;
 
 namespace FishingPlanner
 {
@@ -57,12 +59,31 @@ namespace FishingPlanner
             services.AddSingleton<FishingForecastService>();
             services.AddScoped<IFishingEventRepository, FishingEventRepository>();
             services.AddScoped<IFishingEventService, FishingEventService>();
+            services.AddHttpClient<FishingForecastService>(c =>
+            {
+                c.BaseAddress = new Uri(Configuration["GlobalFishingWatchApi:BaseUrl"]!);
+                c.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Configuration["GlobalFishingWatchApi:Token"]);
+            });
+            services.AddHttpClient<StatsFishingDataProvider>(c =>
+            {
+                c.BaseAddress = new Uri(Configuration["GlobalFishingWatchApi:BaseUrl"]!);
+                c.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Configuration["GlobalFishingWatchApi:Token"]);
+            });
+            services.AddSingleton<FishingDataProviderFactory>();
+            services.AddScoped<IFishingDataProvider>(provider =>
+            {
+                var factory = provider.GetRequiredService<FishingDataProviderFactory>();
+                return factory.Create();
+            });
+
+            // ViewModels and Views
+            services.AddSingleton<MainViewModel>();
             services.AddSingleton<CalendarViewModel>();
             services.AddSingleton<CalendarView>();
             services.AddSingleton<AddEventView>();
             services.AddSingleton<TipsView>();
-            services.AddSingleton<MainViewModel>();
-
+            services.AddTransient<DayDetailView>();
+            services.AddSingleton<MainWindow>();
 
             Services = services.BuildServiceProvider();
 
@@ -78,6 +99,22 @@ namespace FishingPlanner
             {
                 MessageBox.Show("Error while migrating to DB: " + e.Message, "Migration Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 Log.Error(e, "Error while migrating to DB");
+            }
+        }
+
+        protected override void OnStartup(StartupEventArgs e)
+        {
+            try
+            {
+                var mainViewModel = Services.GetRequiredService<MainViewModel>();
+                var mainWindow = new MainWindow(mainViewModel);
+
+                mainWindow.Show();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                Log.Error(ex, "Error");
             }
         }
     }
