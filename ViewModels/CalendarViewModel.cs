@@ -1,14 +1,16 @@
-﻿using System.Windows.Input;
-using FishingPlanner.Models;
-using System.ComponentModel;
+﻿using CommunityToolkit.Mvvm.Input;
 using FishingPlanner.Interfaces;
-using CommunityToolkit.Mvvm.Input;
+using FishingPlanner.Models;
+using FishingPlanner.Repositories;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Windows;
+using System.Windows.Input;
 
 public class CalendarViewModel : INotifyPropertyChanged
 {
     private readonly IFishingDataProvider _fishingService;
+    private readonly IFishingEventRepository repository;
 
     public ObservableCollection<CalendarDay> Days { get; } = [];
 
@@ -33,10 +35,11 @@ public class CalendarViewModel : INotifyPropertyChanged
     public IRelayCommand<CalendarDay> DaySelectedCommand { get; }
 
     public event Action<CalendarDay>? DaySelected;
-
-    public CalendarViewModel(IFishingDataProvider fishingService)
+    public event Action? ReturnToCalendar;
+    public CalendarViewModel(IFishingDataProvider fishingService, IFishingEventRepository repository)
     {
         _fishingService = fishingService;
+        this.repository = repository;
         _currentMonth = DateTime.Today;
 
         PreviousMonthCommand = new RelayCommand(() => CurrentMonth = CurrentMonth.AddMonths(-1));
@@ -51,17 +54,24 @@ public class CalendarViewModel : INotifyPropertyChanged
     {
         if (selectedDay == null) return;
 
-        DaySelected.Invoke(selectedDay);
+        DaySelected?.Invoke(selectedDay);
     }
 
-    private async void LoadCalendarDays()
+    private void OnReturnToCalendar()
+    {
+        ReturnToCalendar?.Invoke();
+    }
+
+    private async Task LoadCalendarDays()
     {
         Days.Clear();
 
         var firstDayOfMonth = new DateTime(CurrentMonth.Year, CurrentMonth.Month, 1);
         var daysOffset = ((int)firstDayOfMonth.DayOfWeek + 6) % 7;
-
         var startDate = firstDayOfMonth.AddDays(-daysOffset);
+
+        var endDate = startDate.AddDays(41);
+        var fishingEvents = await repository.GetEventsInRangeAsync(startDate, endDate);
 
         for (int i = 0; i < 42; i++)
         {
@@ -70,7 +80,10 @@ public class CalendarViewModel : INotifyPropertyChanged
             var calendarDay = new CalendarDay
             {
                 Date = day,
-                IsCurrentMonth = day.Month == CurrentMonth.Month
+                IsCurrentMonth = day.Month == CurrentMonth.Month,
+                Events = fishingEvents
+                    .Where(e => e.Date.ToDateTime(new TimeOnly(0, 0)) == day.Date)
+                    .ToList()
             };
 
             Days.Add(calendarDay);

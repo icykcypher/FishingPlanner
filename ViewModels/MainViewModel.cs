@@ -1,11 +1,16 @@
-﻿using FishingPlanner.Views;
-using FishingPlanner.Models;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using FishingPlanner;
 using FishingPlanner.Interfaces;
+using FishingPlanner.Models;
+using FishingPlanner.Repositories;
 using FishingPlanner.ViewModels;
-using CommunityToolkit.Mvvm.ComponentModel;
+using FishingPlanner.Views;
+using Microsoft.Extensions.DependencyInjection;
 
 public class MainViewModel : ObservableObject
 {
+    private readonly IServiceProvider serviceProvider;
+
     private object _currentView = null!;
     public object CurrentView
     {
@@ -13,19 +18,23 @@ public class MainViewModel : ObservableObject
         set => SetProperty(ref _currentView, value);
     }
 
-    public MainViewModel(IFishingDataProvider fishingService)
+    public MainViewModel(IFishingDataProvider fishingService, IServiceProvider serviceProvider)
     {
-        var calendarVM = new CalendarViewModel(fishingService);
+        this.serviceProvider = serviceProvider;
+        var repo = serviceProvider.GetRequiredService<IFishingEventRepository>();
+        var calendarVM = new CalendarViewModel(fishingService, repo);
         calendarVM.DaySelected += OnDaySelected;
 
-        CurrentView = new CalendarView (calendarVM) { DataContext = calendarVM };
+        CurrentView = new CalendarView(calendarVM, serviceProvider) { DataContext = calendarVM };
+        App.CalendarView = CurrentView;
     }
 
     private void OnDaySelected(CalendarDay selectedDay)
     {
+        var repository = serviceProvider.GetRequiredService<IFishingEventRepository>();
         var detailVM = new DayDetailViewModel(selectedDay);
-        var detailView = new DayDetailView { DataContext = detailVM };
+        var detailView = new DayDetailView(repository, detailVM) { DataContext = detailVM };
 
-        CurrentView = detailView;  // переключаем вью
+        CurrentView = detailView;
     }
 }

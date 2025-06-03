@@ -12,7 +12,6 @@ namespace FishingPlanner
         {
             InitializeComponent();
             DataContext = mainViewModel;
-
         }
     }
 }

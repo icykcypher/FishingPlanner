@@ -5,12 +5,10 @@ using FishingPlanner.Views;
 using FishingPlanner.Services;
 using System.Net.Http.Headers;
 using FishingPlanner.Interfaces;
-using FishingPlanner.ViewModels;
 using FishingPlanner.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System.Diagnostics;
 
 namespace FishingPlanner
 {
@@ -18,9 +16,12 @@ namespace FishingPlanner
     {
         public static IServiceProvider Services { get; private set; } = null!;
         public IConfiguration Configuration { get; }
+        public static object CalendarView { get; set; } = null!;
 
         public App()
         {
+            SetBrowserFeatureControl();
+
             // Configuration
             var configBuilder = new ConfigurationBuilder()
                 .SetBasePath(AppContext.BaseDirectory)
@@ -108,13 +109,34 @@ namespace FishingPlanner
             {
                 var mainViewModel = Services.GetRequiredService<MainViewModel>();
                 var mainWindow = new MainWindow(mainViewModel);
-
                 mainWindow.Show();
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Error: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 Log.Error(ex, "Error");
+            }
+        }
+
+        private void SetBrowserFeatureControl()
+        {
+            try
+            {
+                string appName = System.IO.Path.GetFileName(System.Diagnostics.Process.GetCurrentProcess().MainModule!.FileName);
+
+                using (var key = Microsoft.Win32.Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_BROWSER_EMULATION"))
+                {
+                    key?.SetValue(appName, 11001, Microsoft.Win32.RegistryValueKind.DWord); // IE11 Edge mode
+                }
+
+                using (var key = Microsoft.Win32.Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_ENABLE_CLIPCHILDREN_OPTIMIZATION"))
+                {
+                    key?.SetValue(appName, 1, Microsoft.Win32.RegistryValueKind.DWord);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Ошибка установки режима браузера: " + ex.Message);
             }
         }
     }

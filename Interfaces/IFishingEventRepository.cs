@@ -10,5 +10,6 @@ namespace FishingPlanner.Interfaces
         Task<FishingEvent?> GetByIdAsync(Guid id);
         Task<List<FishingEvent>> GetForMonthAsync(DateTime month);
         Task UpdateAsync(FishingEvent fishingEvent);
+        Task<List<FishingEvent>> GetEventsInRangeAsync(DateTime startDate, DateTime endDate);
     }
 }

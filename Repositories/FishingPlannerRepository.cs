@@ -42,6 +42,16 @@ namespace FishingPlanner.Repositories
             await _context.SaveChangesAsync();
         }
 
+        public async Task<List<FishingEvent>> GetEventsInRangeAsync(DateTime startDate, DateTime endDate)
+        {
+            var start = DateOnly.FromDateTime(startDate);
+            var end = DateOnly.FromDateTime(endDate);
+
+            return await _context.FishingEvents
+                .Where(e => e.Date >= start && e.Date <= end)
+                .ToListAsync();
+        }
+
         public async Task UpdateAsync(FishingEvent fishingEvent)
         {
             _context.FishingEvents.Update(fishingEvent);
